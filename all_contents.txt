@@ -1,0 +1,2713 @@
+
+========================================
+File: C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\a.py
+========================================
+import os
+
+def collect_all_file_contents(root_dir, output_filename='all_contents.txt'):
+    output_path = os.path.join(root_dir, output_filename)
+
+    with open(output_path, 'w', encoding='utf-8') as output_file:
+        for foldername, subfolders, filenames in os.walk(root_dir):
+            # حذف پوشه‌های مخفی
+            subfolders[:] = [d for d in subfolders if not d.startswith('.')]
+            # حذف فایل‌های مخفی
+            filenames = [f for f in filenames if not f.startswith('.')]
+
+            for filename in filenames:
+                filepath = os.path.join(foldername, filename)
+
+                # رد کردن فایل خروجی
+                if filepath == output_path:
+                    continue
+
+                # فقط نوشتن مسیر فایل‌های arff
+                if filename.lower().endswith('.arff'):
+                    output_file.write(f"\n[ARFF FILE] {filepath}\n")
+                    continue
+
+                try:
+                    with open(filepath, 'r', encoding='utf-8') as f:
+                        content = f.read()
+                        output_file.write(f"\n{'='*40}\nFile: {filepath}\n{'='*40}\n")
+                        output_file.write(content + "\n")
+                except Exception as e:
+                    output_file.write(f"\n[Could not read {filepath}: {e}]\n")
+
+if __name__ == '__main__':
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    collect_all_file_contents(current_dir)
+    print("✅ محتوای فایل‌ها (به‌جز arff) در all_contents.txt ذخیره شد.")
+
+
+========================================
+File: C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\DataShuffle\run.bat
+========================================
+@echo off
+javac -d bin src/dataShuffle/Shuffle.java
+cd bin
+java dataShuffle.Shuffle
+pause
+
+[Could not read C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\DataShuffle\bin\dataShuffle\Shuffle.class: 'utf-8' codec can't decode byte 0xca in position 0: invalid continuation byte]
+
+========================================
+File: C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\DataShuffle\src\dataShuffle\Shuffle.java
+========================================
+package dataShuffle;
+
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Scanner;
+
+public class Shuffle {
+	public static void main(String[] args) {
+		String path = "C:\\Users\\user\\Downloads\\Telegram Desktop\\MCRM Algorithm\\thisismydmprj\\MCRM\\data set\\Iris";
+		String fileName = "iris.arff";
+		for(int i = 1 ; i <= 10 ; i++) {
+			shuffle(path, fileName,i, true);			
+		}
+	}
+	
+	public static void shuffle(String path,String fileName, int ittr, boolean removeMissValues) {
+		FileReader reader = null;
+		Scanner in = null;
+		FileWriter writer = null;
+		try {
+			reader = new FileReader(path+"/"+fileName);
+			in = new Scanner(reader);
+			ArrayList<String> array = new ArrayList<>();
+			ArrayList<String> header = new ArrayList<>();
+			String line = null;
+			while(in.hasNext()) {
+				line = in.nextLine();				
+				if(line.trim().equals("") || line.startsWith("%") || line.startsWith("@")) {
+					header.add(line);
+				}else if(line.contains("?") && removeMissValues) {
+					continue;
+				}else {
+					array.add(line);					
+				}
+			}
+			File f = new File(path+"/10");
+			if(!f.exists()) {
+				f.mkdir();
+			}
+			Collections.shuffle(array);			
+			writer = new FileWriter(path+"/10/"+ittr+".arff");
+			for(String str : header) {
+				writer.write(str+"\n");
+			}
+			for(String str : array) {
+				writer.write(str+"\n");
+			}
+		} catch (FileNotFoundException e) {			
+			e.printStackTrace();
+		} catch (IOException e) {			
+			e.printStackTrace();
+		}finally {			
+			try {
+				writer.close();
+				reader.close();
+			} catch (IOException e) {				
+				e.printStackTrace();
+			}
+			in.close();
+		}
+	}
+}
+
+
+========================================
+File: C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\k-fold\run.bat
+========================================
+@echo off
+javac -d bin src/K_Fold.java
+cd bin
+java K_Fold
+pause
+
+[Could not read C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\k-fold\bin\K_Fold.class: 'utf-8' codec can't decode byte 0xca in position 0: invalid continuation byte]
+
+========================================
+File: C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\k-fold\src\K_Fold.java
+========================================
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.LinkedList;
+import java.util.Scanner;
+
+public class K_Fold {
+
+	public static void main(String[] args) throws IOException {
+		String dataSetMainDirectory = "Iris";
+		String path = String.format("C:\\Users\\user\\Downloads\\Telegram Desktop\\MCRM Algorithm\\thisismydmprj\\MCRM\\data set\\%s",dataSetMainDirectory);
+		new File(path+"/"+dataSetMainDirectory).mkdir();
+		for(int i = 0 ; i < 10 ; i++) {
+			new File(path+"/"+dataSetMainDirectory+"/shuffle-"+(i+1)).mkdir();
+			String sourcePath = String.format("%s/10/%d.arff", path,(i+1));
+			String distPath = String.format("%s/%s/shuffle-%d", path,dataSetMainDirectory,(i+1));
+			discreateData(sourcePath, distPath, 10);
+		}
+	}
+	private static void discreateData(String sourcePath, String distPath, int k) throws IOException {
+		LinkedList[] arr = new LinkedList[k];
+		LinkedList<String> header = new LinkedList<>();
+		LinkedList<String> data = new LinkedList<>();		
+		FileReader reader = new FileReader(sourcePath);
+		Scanner input = new Scanner(reader);
+		while(input.hasNext()) {
+			String line = input.nextLine();
+			if(line.trim().equals("") || line.startsWith("%") || line.startsWith("@")) {
+				header.add(line);
+			}else {
+				data.add(line);				
+			}
+		}
+		int foldSize = data.size() / k;
+		int counter = -1;
+		int remain = data.size() % k;
+		for(int i = 0 ; i < k ; i++) {
+			arr[i] = new LinkedList<String>();
+			for(int j = 0 ; j < foldSize ; j++) {
+				counter++;
+				arr[i].add(data.get(counter));
+			}
+			if(remain > 0) {
+				counter++;
+				arr[i].add(data.get(counter));
+				remain--;
+			}
+		}
+		reader.close();
+		input.close();
+		for(int i = 0 ; i < k ; i++) {
+			File f = new File(String.format("%s/fold-%d",distPath,i+1));
+			if(!f.exists()) {
+				f.mkdir();
+			}
+			FileWriter trainWriter = new FileWriter(String.format("%s/fold-%d/%s",distPath,i+1,"train.arff"));
+			for(String str : header) {
+				trainWriter.write(str+"\n");
+			}
+			for(int j = 0 ; j < k ; j++) {
+				if(j != i) {
+					for(String str : (LinkedList<String>)arr[j]) {
+						trainWriter.write(str+"\n");
+					}
+				}
+			}
+			trainWriter.close();			
+			FileWriter testWriter = new FileWriter(String.format("%s/fold-%d/%s",distPath,i+1,"test.arff"));
+			for(String str : header) {
+				testWriter.write(str+"\n");
+			}
+			for(String str : (LinkedList<String>)arr[i]) {
+				testWriter.write(str+"\n");
+			}
+			testWriter.close();
+		}		
+	}
+}
+
+
+========================================
+File: C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\run.bat
+========================================
+@echo off
+javac -d bin src/*.java
+java -cp bin Main
+pause
+
+[Could not read C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\bin\Area.class: 'utf-8' codec can't decode byte 0xca in position 0: invalid continuation byte]
+
+[Could not read C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\bin\ArtificialBeeColony.class: 'utf-8' codec can't decode byte 0xca in position 0: invalid continuation byte]
+
+[Could not read C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\bin\ChainNode.class: 'utf-8' codec can't decode byte 0xca in position 0: invalid continuation byte]
+
+[Could not read C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\bin\Code.class: 'utf-8' codec can't decode byte 0xca in position 0: invalid continuation byte]
+
+[Could not read C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\bin\Data.class: 'utf-8' codec can't decode byte 0xca in position 0: invalid continuation byte]
+
+[Could not read C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\bin\DataSet.class: 'utf-8' codec can't decode byte 0xca in position 0: invalid continuation byte]
+
+[Could not read C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\bin\FNVHash.class: 'utf-8' codec can't decode byte 0xca in position 0: invalid continuation byte]
+
+[Could not read C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\bin\HashTable.class: 'utf-8' codec can't decode byte 0xca in position 0: invalid continuation byte]
+
+[Could not read C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\bin\Honey.class: 'utf-8' codec can't decode byte 0xca in position 0: invalid continuation byte]
+
+[Could not read C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\bin\Main.class: 'utf-8' codec can't decode byte 0xca in position 0: invalid continuation byte]
+
+[Could not read C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\bin\MinTerm.class: 'utf-8' codec can't decode byte 0xca in position 0: invalid continuation byte]
+
+[Could not read C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\bin\OpenData.class: 'utf-8' codec can't decode byte 0xca in position 0: invalid continuation byte]
+
+[Could not read C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\bin\OutputWriter.class: 'utf-8' codec can't decode byte 0xca in position 0: invalid continuation byte]
+
+[Could not read C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\bin\PrimeImplicant.class: 'utf-8' codec can't decode byte 0xca in position 0: invalid continuation byte]
+
+[Could not read C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\bin\QuineMcCluskey.class: 'utf-8' codec can't decode byte 0xca in position 0: invalid continuation byte]
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\iris.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\10\1.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\10\10.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\10\2.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\10\3.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\10\4.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\10\5.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\10\6.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\10\7.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\10\8.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\10\9.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-1\fold-1\test.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-1\fold-1\train.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-1\fold-10\test.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-1\fold-10\train.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-1\fold-2\test.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-1\fold-2\train.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-1\fold-3\test.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-1\fold-3\train.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-1\fold-4\test.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-1\fold-4\train.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-1\fold-5\test.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-1\fold-5\train.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-1\fold-6\test.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-1\fold-6\train.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-1\fold-7\test.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-1\fold-7\train.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-1\fold-8\test.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-1\fold-8\train.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-1\fold-9\test.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-1\fold-9\train.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-10\fold-1\test.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-10\fold-1\train.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-10\fold-10\test.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-10\fold-10\train.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-10\fold-2\test.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-10\fold-2\train.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-10\fold-3\test.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-10\fold-3\train.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-10\fold-4\test.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-10\fold-4\train.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-10\fold-5\test.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-10\fold-5\train.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-10\fold-6\test.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-10\fold-6\train.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-10\fold-7\test.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-10\fold-7\train.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-10\fold-8\test.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-10\fold-8\train.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-10\fold-9\test.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-10\fold-9\train.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-2\fold-1\test.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-2\fold-1\train.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-2\fold-10\test.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-2\fold-10\train.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-2\fold-2\test.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-2\fold-2\train.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-2\fold-3\test.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-2\fold-3\train.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-2\fold-4\test.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-2\fold-4\train.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-2\fold-5\test.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-2\fold-5\train.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-2\fold-6\test.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-2\fold-6\train.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-2\fold-7\test.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-2\fold-7\train.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-2\fold-8\test.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-2\fold-8\train.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-2\fold-9\test.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-2\fold-9\train.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-3\fold-1\test.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-3\fold-1\train.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-3\fold-10\test.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-3\fold-10\train.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-3\fold-2\test.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-3\fold-2\train.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-3\fold-3\test.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-3\fold-3\train.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-3\fold-4\test.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-3\fold-4\train.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-3\fold-5\test.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-3\fold-5\train.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-3\fold-6\test.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-3\fold-6\train.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-3\fold-7\test.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-3\fold-7\train.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-3\fold-8\test.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-3\fold-8\train.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-3\fold-9\test.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-3\fold-9\train.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-4\fold-1\test.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-4\fold-1\train.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-4\fold-10\test.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-4\fold-10\train.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-4\fold-2\test.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-4\fold-2\train.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-4\fold-3\test.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-4\fold-3\train.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-4\fold-4\test.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-4\fold-4\train.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-4\fold-5\test.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-4\fold-5\train.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-4\fold-6\test.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-4\fold-6\train.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-4\fold-7\test.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-4\fold-7\train.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-4\fold-8\test.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-4\fold-8\train.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-4\fold-9\test.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-4\fold-9\train.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-5\fold-1\test.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-5\fold-1\train.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-5\fold-10\test.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-5\fold-10\train.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-5\fold-2\test.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-5\fold-2\train.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-5\fold-3\test.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-5\fold-3\train.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-5\fold-4\test.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-5\fold-4\train.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-5\fold-5\test.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-5\fold-5\train.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-5\fold-6\test.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-5\fold-6\train.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-5\fold-7\test.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-5\fold-7\train.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-5\fold-8\test.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-5\fold-8\train.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-5\fold-9\test.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-5\fold-9\train.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-6\fold-1\test.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-6\fold-1\train.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-6\fold-10\test.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-6\fold-10\train.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-6\fold-2\test.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-6\fold-2\train.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-6\fold-3\test.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-6\fold-3\train.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-6\fold-4\test.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-6\fold-4\train.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-6\fold-5\test.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-6\fold-5\train.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-6\fold-6\test.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-6\fold-6\train.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-6\fold-7\test.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-6\fold-7\train.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-6\fold-8\test.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-6\fold-8\train.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-6\fold-9\test.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-6\fold-9\train.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-7\fold-1\test.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-7\fold-1\train.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-7\fold-10\test.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-7\fold-10\train.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-7\fold-2\test.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-7\fold-2\train.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-7\fold-3\test.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-7\fold-3\train.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-7\fold-4\test.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-7\fold-4\train.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-7\fold-5\test.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-7\fold-5\train.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-7\fold-6\test.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-7\fold-6\train.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-7\fold-7\test.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-7\fold-7\train.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-7\fold-8\test.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-7\fold-8\train.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-7\fold-9\test.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-7\fold-9\train.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-8\fold-1\test.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-8\fold-1\train.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-8\fold-10\test.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-8\fold-10\train.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-8\fold-2\test.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-8\fold-2\train.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-8\fold-3\test.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-8\fold-3\train.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-8\fold-4\test.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-8\fold-4\train.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-8\fold-5\test.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-8\fold-5\train.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-8\fold-6\test.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-8\fold-6\train.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-8\fold-7\test.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-8\fold-7\train.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-8\fold-8\test.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-8\fold-8\train.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-8\fold-9\test.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-8\fold-9\train.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-9\fold-1\test.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-9\fold-1\train.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-9\fold-10\test.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-9\fold-10\train.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-9\fold-2\test.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-9\fold-2\train.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-9\fold-3\test.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-9\fold-3\train.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-9\fold-4\test.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-9\fold-4\train.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-9\fold-5\test.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-9\fold-5\train.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-9\fold-6\test.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-9\fold-6\train.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-9\fold-7\test.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-9\fold-7\train.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-9\fold-8\test.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-9\fold-8\train.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-9\fold-9\test.arff
+
+[ARFF FILE] C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\data set\Iris\Iris\shuffle-9\fold-9\train.arff
+
+========================================
+File: C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\src\Area.java
+========================================
+import java.util.ArrayList;
+
+public class Area {
+	
+	public ArrayList<Integer> selectedFeatures = new ArrayList<Integer>();
+	public double[] cutPoints = null;
+	public boolean remove = false;
+	private String areaCode;
+	private int truePos;
+	private int falsePos;	
+	private int lable;
+	private int[] lableFrequency = new int[Data.getLabelInterval()];
+	
+	public Area() {}
+
+	public void setAreaCode(String areaCode) {
+		this.areaCode = areaCode;
+	}
+	public String getAreaCode() {
+		return areaCode;
+	}
+	public void setTruePos(int truePos) {
+		this.truePos = truePos;
+	}
+	public int getTruePos() {
+		return truePos;
+	}
+	public void setFalsePos(int falsePos) {
+		this.falsePos = falsePos;
+	}
+	public int getFalsePos() {
+		return falsePos;
+	}
+	
+	public void setLable(int lable) {
+		this.lable = lable;
+	}
+	public int getLable() {
+		return lable;
+	}
+	public void setLableFrequency(int lableIndex , int lableFrequency) {
+		this.lableFrequency[lableIndex] = lableFrequency;
+	}
+	public int getLableFrequency(int lableIndex) {
+		return lableFrequency[lableIndex];
+	}
+	public int[] getLableFrequency() {
+		return lableFrequency;
+	}	
+}
+
+
+========================================
+File: C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\src\ArtificialBeeColony.java
+========================================
+import java.io.IOException;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Random;
+
+public class ArtificialBeeColony {
+	public int MAX_LENGTH; // The number of parameters of the problem to be optimized
+	public int NP; // The number of total bees (colony size). employed + onlookers
+	public int FOOD_NUMBER; // The number of food sources equals the half of the colony size
+	public int LIMIT; // A food source which could not be improved through "limit" trials is abandoned by its employed bee
+	public int MAX_EPOCH; // The number of cycles for foraging {a stopping criteria}
+	private double featureSelectionProbability = 0.1;
+	private DataSet trainSet = null;
+	private double[][] cutPoints = null;
+	public Random rand;
+	public ArrayList<Honey> foodSources;
+	public Honey gBest;
+	public int epoch;
+	private int ittr = 0;
+	private int maxIttr = 1000;
+
+	public ArtificialBeeColony(DataSet data, double[][] cutPoints) {
+		this.trainSet = data;
+		this.cutPoints = cutPoints;
+		MAX_LENGTH = Data.getNumOfNumericalFeatures();
+		NP = 60;
+		FOOD_NUMBER = NP / 2;
+		LIMIT = 100;
+		MAX_EPOCH = 2000;
+		gBest = null;
+		epoch = 0;
+		gBest = new Honey(this.cutPoints);
+		gBest.setCost(Double.MAX_VALUE);
+	}
+
+	public boolean algorithm() {
+		foodSources = new ArrayList<Honey>();
+		rand = new Random();
+		boolean done = false;
+		epoch = 0;
+
+		initialize();
+		memorizeBestFoodSource();
+
+		while (!done) {
+			if (epoch < MAX_EPOCH && ittr < maxIttr) {
+				ittr++;
+				sendEmployedBees();
+				getFitness();
+				calculateProbabilities();
+				sendOnlookerBees();
+				memorizeBestFoodSource();
+				sendScoutBees();
+				epoch++;
+			} else {
+				done = true;
+			}
+		}
+		System.out.println("\tepoch : " + epoch);
+		return done;
+	}
+
+	public ArrayList<Area> getRule(int f) throws IOException {
+		return gBest.getRules(this.trainSet, f);
+	}
+
+	public void sendEmployedBees() {
+		int neighborBeeIndex = 0;
+		Honey currentBee = null;
+		Honey neighborBee = null;
+
+		for (int i = 0; i < FOOD_NUMBER; i++) {			
+			neighborBeeIndex = getExclusiveRandomNumber(FOOD_NUMBER - 1, i);
+			currentBee = foodSources.get(i);
+			neighborBee = foodSources.get(neighborBeeIndex);
+			sendToWork(currentBee, neighborBee);
+		}
+	}
+
+	public void sendOnlookerBees() {		
+		int neighborBeeIndex = 0;
+		Honey currentBee = null;
+		Honey neighborBee = null;
+		int[] s = SUS_Selection();
+		for (int f = 0; f < FOOD_NUMBER; f++) {
+			currentBee = foodSources.get(s[f]);
+			neighborBeeIndex = getExclusiveRandomNumber(FOOD_NUMBER - 1, s[f]);
+			neighborBee = foodSources.get(neighborBeeIndex);
+			sendToWork(currentBee, neighborBee);
+		}
+	}
+
+	private int[] SUS_Selection() {
+		int[] indexs = new int[FOOD_NUMBER];
+		double stepSize = 1.0 / FOOD_NUMBER;
+		double seed = rand.nextDouble() * stepSize;
+		double sum = 0;
+		int foodCounter = 0;
+		int selectedCounter = 0;
+		sum += foodSources.get(foodCounter).getSelectionProbability();
+		while (selectedCounter < FOOD_NUMBER) {
+			if (seed < sum) {
+				indexs[selectedCounter] = foodCounter;
+				seed += stepSize;
+				selectedCounter++;
+			} else {
+				foodCounter++;
+				sum += foodSources.get(foodCounter).getSelectionProbability();
+			}
+		}
+		return indexs;
+	}
+
+//	private int roletWheel_Selection() {
+//		int index = -1;
+//		double sum = 0;
+//		double rnd = rand.nextDouble();
+//		for (int i = 0; i < FOOD_NUMBER; i++) {
+//			sum += foodSources.get(i).getSelectionProbability();
+//			if (rnd < sum) {
+//				index = i;
+//				break;
+//			}
+//		}
+//		return index;
+//	}
+
+	public void sendToWork(Honey currentBee, Honey neighborBee) {
+
+		int parameterToChange = rand.nextInt(Data.getNumOfNumericalFeatures());
+		boolean done;// new
+
+		int stepLen = Math
+				.abs(currentBee.getNumNectar(parameterToChange) - neighborBee.getNumNectar(parameterToChange));
+		stepLen = stepLen == 0 ? 0 : rand.nextInt(stepLen) + 1;
+		if (stepLen == 0) { // new
+			done = false;
+		} else {// new
+			int newValue;
+			if (currentBee.getNumNectar(parameterToChange) == 0) {// new
+				newValue = currentBee.getNumNectar(parameterToChange) + stepLen;
+			} else if (currentBee.getNumNectar(parameterToChange) == cutPoints[parameterToChange].length - 1) {// new
+				newValue = currentBee.getNumNectar(parameterToChange) + (-1 * stepLen);
+			} else if (rand.nextDouble() < 0.5) {
+				newValue = currentBee.getNumNectar(parameterToChange) + (-1 * stepLen);
+			} else {
+				newValue = currentBee.getNumNectar(parameterToChange) + stepLen;
+			}
+
+			if (newValue > cutPoints[parameterToChange].length - 1) {
+				newValue = cutPoints[parameterToChange].length - 1;
+			} else if (newValue < 0) {
+				newValue = 0;
+			}
+			done = swap(parameterToChange, newValue, currentBee, false);
+		}
+		if (!done) {
+			if (rand.nextDouble() < this.featureSelectionProbability) {
+				this.featureSelection(currentBee);
+			} 
+		}
+	}
+
+	private void featureSelection(Honey food) {
+		ArrayList<Integer> dontRemoved = new ArrayList<>();
+		for (int i = 0; i < Data.getNumOfNumericalFeatures(); i++) {
+			if (food.getNumNectar(i) == this.cutPoints[i].length - 1 || food.getNumNectar(i) == 0) {
+				continue;
+			} else {
+				dontRemoved.add(i);
+			}
+		}
+		if (dontRemoved.size() <= 1) {
+			return;
+		}
+		int rnd = rand.nextInt(dontRemoved.size());
+		int index = dontRemoved.get(rnd);
+		int val = Math.random() < 0.5 ? 0 : this.cutPoints[index].length - 1;// new
+		swap(index, val, food, true);
+
+	}
+
+	private boolean swap(int index, int newValue, Honey currentBee, boolean f) {
+		int prevValue = currentBee.getNumNectar(index);
+		double prevCost = currentBee.getCost();
+		double prevPurity = currentBee.purity;
+		boolean done = true;
+		currentBee.setNumNectar(index, newValue);
+		currentBee.computeCost(this.trainSet);
+		double currCost = currentBee.getCost();
+		
+		if ((f && prevCost < currCost) || (!f && prevCost <= currCost)) { // No improvement //new
+			currentBee.setNumNectar(index, prevValue);
+			currentBee.setCost(prevCost);
+			currentBee.purity = prevPurity;
+			currentBee.setTrials(currentBee.getTrials() + 1);
+			done = false;
+		} else { // improved solution
+			if (prevCost > currCost) {
+				currentBee.setTrials(0);
+			}
+		}
+		return done;
+	}
+
+	public void sendScoutBees() {
+		Honey currentBee = null;
+		for (int i = 0; i < FOOD_NUMBER; i++) {
+			currentBee = foodSources.get(i);
+			if (currentBee.getTrials() >= LIMIT) {
+				currentBee.initNectar();
+				currentBee.computeCost(this.trainSet);
+				currentBee.setTrials(0);
+			}
+		}
+	}
+
+	public void getFitness() {		
+		Honey thisFood = null;
+		double worstScore = 0.0;		
+		worstScore = Collections.max(foodSources).getCost() + 0.001;
+
+		for (int i = 0; i < FOOD_NUMBER; i++) {
+			thisFood = foodSources.get(i);
+			thisFood.setFitness(worstScore - thisFood.getCost());
+		}
+	}
+
+	public void calculateProbabilities() {
+		Honey thisFood = null;
+		double maxfit = foodSources.get(0).getFitness();
+
+		for (int i = 1; i < FOOD_NUMBER; i++) {
+			thisFood = foodSources.get(i);
+			maxfit += thisFood.getFitness();
+		}
+
+		for (int j = 0; j < FOOD_NUMBER; j++) {
+			thisFood = foodSources.get(j);
+			thisFood.setSelectionProbability((thisFood.getFitness() / maxfit));
+		}
+	}
+
+	public void initialize() {
+		for (int i = 0; i < FOOD_NUMBER; i++) {
+			Honey newHoney = new Honey(this.cutPoints);
+			newHoney.computeCost(trainSet);
+			foodSources.add(newHoney);
+		} 
+	}
+
+	public int getRandomNumber(int low, int high) {
+		return (int) Math.round((high - low) * rand.nextDouble() + low);
+	}
+
+	public int getExclusiveRandomNumber(int high, int except) {
+//      Gets a random number with the exception of the parameter
+		boolean done = false;
+		int getRand = 0;
+
+		while (!done) {
+			getRand = rand.nextInt(high);
+			if (getRand != except) {
+				done = true;
+			}
+		}
+
+		return getRand;
+	}
+
+	public void memorizeBestFoodSource() {
+		int index = findMinIndex(foodSources);
+		if (gBest.getCost() > foodSources.get(index).getCost()) {			
+			this.ittr = 0;
+			for (int i = 0; i < MAX_LENGTH; i++) {
+				gBest.setNumNectar(i, foodSources.get(index).getNumNectar(i));
+			}
+			
+			gBest.setCost(foodSources.get(index).getCost());
+			gBest.purity = foodSources.get(index).purity;
+		}
+	}
+	
+	private int findMinIndex(ArrayList<Honey> arr) {
+		double min = Double.MAX_VALUE;
+		int index = -1;
+		for (int i = 0; i < arr.size(); i++) {
+			if (arr.get(i).getCost() < min) {
+				min = arr.get(i).getCost();
+				index = i;
+			}
+		}
+		return index;
+	}
+
+	public void setMaxEpoch(int newMaxEpoch) {
+		this.MAX_EPOCH = newMaxEpoch;
+	}
+
+	public void setLimit(int newLimit) {
+		this.LIMIT = newLimit;
+	}
+}
+
+========================================
+File: C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\src\Data.java
+========================================
+public class Data implements Comparable<Data>{
+	public static int sortFeature = 0;
+//	private static int numOfCategoricalFeatures = 0;
+	private static int numOfNumericalFeatures = 0;
+//	private static Integer[] categoricalFeatureIntervals = null;
+	private static double[] numericalFeatureMaxs = null;
+	private static double[] numericalFeatureMins = null;
+	private static int labelInterval = 0;
+	public int label = -1;
+//	public byte[] categoricalFeatures = new byte[numOfCategoricalFeatures];
+	public double[] numericalFeatures =  new double[numOfNumericalFeatures];
+	public static void setNumOfNumericalFeatures(int numOfNumericalFeatures) {
+		Data.numOfNumericalFeatures = numOfNumericalFeatures;
+	}
+//	public static void setNumOfCategoricalFeatures(int n) {
+//		numOfCategoricalFeatures = n;
+//	}
+//	public static void setCategoricalFeatureIntervals(Integer[] intv) {
+//		categoricalFeatureIntervals = intv;
+//	}
+	public static void setNumericalFeatureMaxs(double[] numericalFeatureMaxs) {
+		Data.numericalFeatureMaxs = numericalFeatureMaxs;
+	}
+	public static void setNumericalFeatureMins(double[] numericalFeatureMins) {
+		Data.numericalFeatureMins = numericalFeatureMins;
+	}
+	public static void setNumericalFeatureMax(int f, double max) {
+		Data.numericalFeatureMaxs[f] = max;
+	}
+	public static void setNumericalFeatureMin(int f, double min) {
+		Data.numericalFeatureMins[f] = min;
+	}
+	public static void setLabelInterval(int intv) {
+		labelInterval = intv;
+	}
+	public static int getNumOfNumericalFeatures() {
+		return numOfNumericalFeatures;
+	}
+//	public static int getNumOfCategoricalFeatures() {
+//		return numOfCategoricalFeatures;
+//	}
+//	public static Integer[] getCategoricalFeatureIntervals() {
+//		return categoricalFeatureIntervals;
+//	}
+	public static int getLabelInterval() {
+		return labelInterval;
+	}
+	public static double getNumericalFeatureMaxs(int n) {
+		return numericalFeatureMaxs[n];
+	}
+	public static double getNumericalFeatureMins(int n) {
+		return numericalFeatureMins[n];
+	}
+	public Data() {
+		
+	}
+	@Override
+	public int compareTo(Data d) {
+		if(this.numericalFeatures[this.sortFeature] < d.numericalFeatures[this.sortFeature]) {
+			return -1;
+		}else if(this.numericalFeatures[this.sortFeature] > d.numericalFeatures[this.sortFeature]) {
+			return 1;
+		}else {
+			return 0;
+		}
+	}
+}
+
+
+========================================
+File: C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\src\DataSet.java
+========================================
+import java.util.ArrayList;
+import java.util.Collections;
+
+public class DataSet {
+	private ArrayList<Data> dataSet = new ArrayList<Data>();
+	private int[] lableFreq = new int[Data.getLabelInterval()];
+	public void setData(Data data, int index) {
+		dataSet.set(index,data);
+		this.increaseLableFrequency(data.label);
+	}
+	public void push(Data data) {
+		dataSet.add(data);
+		this.increaseLableFrequency(data.label);
+	}
+	public Data getData(int index) {
+		return dataSet.get(index);
+	}
+	public Data pop() {
+		this.decreaseLableFrequency(dataSet.get(getDataSetSize()-1).label);
+		return dataSet.remove(getDataSetSize()-1);
+	}
+	public int getDataSetSize() {
+		return dataSet.size();
+	}
+	public void shuffle() {
+		Collections.shuffle(dataSet);
+	}
+	public ArrayList<Data> getSubList(int start , int end){
+		return new ArrayList<Data>(dataSet.subList(start, end));
+	}
+	public void setDataList(ArrayList<Data> data) {
+		dataSet = data;
+		for(int i = 0 ; i < data.size() ; i++) {
+			this.increaseLableFrequency(data.get(i).label);
+		}
+	}
+	public Data remove(int index) {
+		this.decreaseLableFrequency(dataSet.get(index).label);
+		return dataSet.remove(index);
+	}	
+	public void setLableFrequency(int lable, int freq) {
+		this.lableFreq[lable-1] = freq;
+	}
+	public void increaseLableFrequency(int lable) {
+		this.lableFreq[lable-1]++;
+	}
+	public void decreaseLableFrequency(int lable) {
+		this.lableFreq[lable-1]--;
+	}
+	public int getLabelFrequency(int c) {
+		return this.lableFreq[c-1];
+	}
+	public void removeAll() {
+		dataSet.clear();
+		for(int i = 1; i <= Data.getLabelInterval() ; i++) {
+			this.setLableFrequency(i, 0);
+		}
+	}
+}
+
+
+========================================
+File: C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\src\FNVHash.java
+========================================
+
+/**
+ * 
+ * <DIV lang="en"></DIV>
+ * <DIV lang="ja"></DIV>
+ * 
+ * @author Makoto YUI (yuin405+xbird@gmail.com)
+ * @link http://www.isthe.com/chongo/tech/comp/fnv/index.html
+ */
+public final class FNVHash {
+
+    private static final long FNV_64_INIT = 0xcbf29ce484222325L;
+    private static final long FNV_64_PRIME = 0x100000001b3L;
+
+    private static final int FNV_32_INIT = 0x811c9dc5;
+    private static final int FNV_32_PRIME = 0x01000193;
+
+    public FNVHash() {}
+
+    public static int hash32(final byte[] k) {
+        int rv = FNV_32_INIT;
+        final int len = k.length;
+        for(int i = 0; i < len; i++) {
+            rv ^= k[i];
+            rv *= FNV_32_PRIME;
+        }
+        return rv;
+    }
+
+    public static long hash64(final byte[] k) {
+        long rv = FNV_64_INIT;
+        final int len = k.length;
+        for(int i = 0; i < len; i++) {
+            rv ^= k[i];
+            rv *= FNV_64_PRIME;
+        }
+        return rv;
+    }
+
+    public static int hash32(final String k) {
+        int rv = FNV_32_INIT;
+        final int len = k.length();
+        for(int i = 0; i < len; i++) {
+            rv ^= k.charAt(i);
+            rv *= FNV_32_PRIME;
+        }
+        return rv;
+    }
+
+    public static long hash64(final String k) {
+        long rv = FNV_64_INIT;
+        final int len = k.length();
+        for(int i = 0; i < len; i++) {
+            rv ^= k.charAt(i);
+            rv *= FNV_64_PRIME;
+        }
+        return rv;
+    }
+
+}
+
+========================================
+File: C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\src\HashTable.java
+========================================
+import java.util.LinkedList;
+
+public class HashTable<K,V> {
+	int initSize = 16;
+	int[] distribution;
+	int[] conflicts;
+	ChainNode<K,V>[] table = null;
+	LinkedList<Integer> selectedBuckets = new LinkedList<>();
+	public HashTable(int initSize) {
+		this.initSize = initSize;
+		table = new ChainNode[initSize];
+		conflicts = new int[initSize];
+		distribution = new int[initSize];
+	}
+	public void put(K key, V value) {
+		int hash = key.hashCode();
+		int index = hash & (initSize-1);
+		distribution[index]++;
+		if(table[index] == null) {
+			table[index] = new ChainNode<K,V>(hash, key, value, null);
+			selectedBuckets.add(index);
+		}else {
+			ChainNode node = searchFor(index,key);
+			if(node == null) {
+				node = new ChainNode<K,V>(hash, key, value,table[index]);
+				table[index] = node;
+				conflicts[index]++;
+			}else {
+				node.value = value;
+			}
+		}
+	}
+	public V get(K key) {
+		int hash = key.hashCode();
+		int index = hash & (initSize-1);
+		ChainNode<K,V> node = searchFor(index, key);
+//		if(node == null) {
+//			throw new Exception("The key does not exist!");
+//		}
+		return node.value;
+	}
+	public boolean containsKey(K key) {
+		int hash = key.hashCode();
+		int index = hash & (initSize-1);
+		if(searchFor(index, key) == null) {
+			return false;
+		}else {
+			return true;
+		}
+	}
+	private ChainNode<K,V> searchFor(int index, K key) {
+		ChainNode<K,V> node = table[index];
+		while(node != null) {
+			if(node.key.equals(key)) {
+				break;
+			}
+			node = node.next;
+		}
+		return node;
+	}
+	public LinkedList<V> values(){
+		LinkedList<V> values = new LinkedList<>();
+		ChainNode<K,V> node = null;
+		for(int i : selectedBuckets) {
+			node = table[i];
+			while(node != null) {
+				values.add(node.value);
+				node = node.next;
+			}
+		}
+		return values;
+	}
+	public LinkedList<K> keySet(){
+		LinkedList<K> keys = new LinkedList<>();
+		ChainNode<K,V> node = null;
+		for(int i : selectedBuckets) {
+			node = table[i];
+			while(node != null) {
+				keys.add(node.key);
+				node = node.next;
+			}
+		}
+		return keys;
+	}
+	public void printConflicts() {
+		for(int i = 0 ; i < initSize ; i++) {
+			System.out.println(i+" : "+conflicts[i]);
+		}
+	}
+	public void printDistribution() {
+		for(int i = 0 ; i < initSize ; i++) {
+			System.out.println(i+" : "+distribution[i]);
+		}
+	}
+}
+class ChainNode<K,V> {
+    final int hash;
+    final K key;
+    V value;
+    ChainNode<K,V> next;
+
+    ChainNode(int hash, K key, V value, ChainNode<K,V> next) {
+        this.hash = hash;
+        this.key = key;
+        this.value = value;
+        this.next = next;
+    }
+
+    public final K getKey()        { return key; }
+    public final V getValue()      { return value; }
+    public final String toString() { return key + "=" + value; }    
+
+    public final V setValue(V newValue) {
+        V oldValue = value;
+        value = newValue;
+        return oldValue;
+    }    
+}
+
+========================================
+File: C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\src\Honey.java
+========================================
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.Random;
+
+
+class Code{
+	int hash;
+//	String code;
+	byte[] code;
+	Code(byte[] code){
+		this.code = code;
+		this.hash = FNVHash.hash32(code);
+//		this.hash = code.hashCode();  //string default hash generation - With this method, the data distribution will not be uniform.
+//		this.hash = Arrays.hashCode(code);  //byte array hash
+	}
+	
+	@Override
+	public int hashCode() {
+		return hash;
+	}
+
+	@Override
+	public boolean equals(Object arg0) {
+		return Arrays.equals(this.code, ((Code)arg0).code);		
+	}
+	
+	@Override
+	public String toString() {
+		StringBuilder str = new StringBuilder();
+		for(byte b : code) {
+			str.append((char)b);
+		}
+		return str.toString();
+	}
+}
+
+public class Honey implements Comparable<Honey> {	
+	private int numNectar[]; 	
+    private int trials;
+    private double cost;
+    private double fitness;
+    private double selectionProbability;
+    private double[][] cutPoints;    
+    private Random rand = new Random();
+    public double purity = 0;
+    private int initTableSize = 1024;
+    
+    public Honey(double[][] cutPoints) {      	
+    	if(Data.getNumOfNumericalFeatures()!=0) {
+    		this.numNectar = new int[Data.getNumOfNumericalFeatures()];    		
+    	}        
+        
+        this.cost = 0;
+        this.trials = 0;
+        this.fitness = 0.0;
+        this.selectionProbability = 0.0;
+        this.cutPoints = cutPoints;
+        initNectar();
+    }	
+    
+    public ArrayList<Area> getRules(DataSet trainSet, int f){
+    	boolean[] selectedFeatures = new boolean[Data.getNumOfNumericalFeatures()];    	
+    	ArrayList<Area> areas = new ArrayList<>();
+    	ArrayList<Integer> sf = new ArrayList<>();
+    	ArrayList[] clazzes = new ArrayList[Data.getLabelInterval()];
+    	double cutPoints[] = Data.getNumOfNumericalFeatures()>0 ? extractCutPoints(this.numNectar) : null;
+    	double cp[] = null;
+    	int codeSize = 0;
+    	for(int i = 0 ; i < Data.getLabelInterval() ; i++) {
+    		clazzes[i] = new ArrayList<Area>();
+    	}
+    	
+    	for (int k = 0; k < Data.getNumOfNumericalFeatures(); k++) {
+			if(this.cutPoints[k].length-1 != this.numNectar[k] && this.numNectar[k] != 0) {
+				selectedFeatures[k] = true;
+				sf.add(k);
+				codeSize++;
+			}
+		}
+    	cp = new double[codeSize];
+    	for(int i = 0 ; i < sf.size() ; i++) {
+    		cp[i] = cutPoints[sf.get(i)];
+    	}
+    	
+    	int[] truePos = new int[Data.getLabelInterval()];
+    	int[] pos = new int[Data.getLabelInterval()];
+    	DataSet data = trainSet;
+//		HashMap<Code, int[]> classFreq = new HashMap<>();
+		HashTable<Code, int[]> classFreq = new HashTable<>(initTableSize);
+		byte[] code = null;		
+
+		for (int j = 0; j < data.getDataSetSize(); j++) {
+			code = new byte[codeSize];			
+			for (int k = 0; k < sf.size(); k++) {
+				
+				int fi = sf.get(k);
+				
+				if (data.getData(j).numericalFeatures[fi] <= cutPoints[fi]) {
+					code[k] = '0';					
+				} else {
+					code[k] = '1';					
+				}
+			}			
+			
+			Code areaCode = new Code(code);
+			
+			if (classFreq.containsKey(areaCode)) {
+				classFreq.get(areaCode)[data.getData(j).label-1]++;
+			} else {
+				classFreq.put(areaCode, new int[Data.getLabelInterval()]);				
+				classFreq.get(areaCode)[data.getData(j).label-1]++;
+			}
+		}
+		int maxFreq = 0;
+		
+		for (Code key : classFreq.keySet()) {			
+			maxFreq = 0;			
+			int label = -1;
+			int[] areaInstances = classFreq.get(key);
+			Area newArea = new Area();
+			newArea.setAreaCode(key.toString());
+			int allInstances = 0;
+			for (int l = 1; l <= Data.getLabelInterval(); l++) {
+				allInstances += areaInstances[l-1];				
+			}
+			for (int l = 1; l <= Data.getLabelInterval(); l++) {				
+				int labelFreq = areaInstances[l-1];	
+				newArea.setLableFrequency(l-1, labelFreq);
+				if (labelFreq == 0) {
+					continue;
+				}
+				if (labelFreq > maxFreq) {
+					maxFreq = labelFreq;
+					label = l;
+				}
+								
+			}			
+			for(Integer ff : sf) {
+				newArea.selectedFeatures.add(ff);
+			}
+			newArea.setLable(label);
+			newArea.setTruePos(maxFreq);
+			newArea.setFalsePos(allInstances - maxFreq);			
+			newArea.cutPoints = Arrays.copyOf(cp, cp.length);
+			areas.add(newArea);
+			clazzes[label-1].add(newArea);	
+			truePos[label-1] += newArea.getTruePos();
+			pos[label-1] += newArea.getFalsePos() + newArea.getTruePos();
+			
+		}				
+		
+    	return areas;
+    }
+    
+    @Override
+    public int compareTo(Honey h) {    	
+		if (this.cost < h.cost) {
+			return -1;
+		} else if (this.cost > h.cost) {
+			return 1;
+		} else {
+			return 0;
+		}	
+    }
+
+    public void initNectar() { 
+    	for (int j = 0; j < Data.getNumOfNumericalFeatures(); j++) {    
+    		if(Math.random() < 0.2) {
+    		this.numNectar[j] = rand.nextInt(cutPoints[j].length);    		
+    		}else {
+    			if(Math.random() < 0.5) {
+    				this.numNectar[j] = cutPoints[j].length-1;
+    			}else {
+    				this.numNectar[j] = 0;
+    			}
+    		}
+		}    	
+    }
+        
+	public void computeCost(DataSet trainSet) {		
+		DataSet data = trainSet;
+		double maxArea = data.getDataSetSize() < Math.pow(2, Data.getNumOfNumericalFeatures()) ? data.getDataSetSize() : Math.pow(2, Data.getNumOfNumericalFeatures());
+		LinkedList<Integer> sf = new LinkedList<>();
+//		HashMap<Code, int[]> classFreq = new HashMap<>();
+		HashTable<Code, int[]> classFreq = new HashTable<>(initTableSize);
+		int codeSize = 0;
+		
+		double cutPoints[] = null;
+		if(Data.getNumOfNumericalFeatures()>0) {
+			cutPoints = extractCutPoints(this.numNectar);
+		}
+		for (int k = 0; k < Data.getNumOfNumericalFeatures(); k++) {
+			if(this.cutPoints[k].length-1 != this.numNectar[k] && this.numNectar[k] != 0) {
+				sf.add(k);
+				codeSize++;
+			}
+		}
+		byte[] code = null;
+		for (int j = 0; j < data.getDataSetSize(); j++) {
+			code = new byte[codeSize];			
+			for (int k = 0; k < sf.size(); k++) {
+				
+				int f = sf.get(k);
+				
+				if (data.getData(j).numericalFeatures[f] <= cutPoints[f]) {
+					code[k] = '0';					
+				} else {
+					code[k] = '1';					
+				}
+			}			
+			
+			Code areaCode = new Code(code);
+			if (classFreq.containsKey(areaCode)) {
+				classFreq.get(areaCode)[data.getData(j).label-1]++;
+			} else {
+				classFreq.put(areaCode, new int[Data.getLabelInterval()]);				
+				classFreq.get(areaCode)[data.getData(j).label-1]++;
+			}
+
+		}
+		//classFreq.printDistribution();
+		//classFreq.printConflicts();
+		double purity = 0;
+		int maxFreq = 0;
+		double areas = 0;
+
+		for (int[] value : classFreq.values()) {			
+			areas++;
+			maxFreq = 0;
+						
+			int[] areaInstances = value;
+			int allInstances = 0;
+			for (int l = 1; l <= Data.getLabelInterval(); l++) {
+				allInstances += areaInstances[l-1];				
+			}
+			
+			for (int l = 1; l <= Data.getLabelInterval(); l++) {				
+				int labelFreq = areaInstances[l-1];				
+				if (labelFreq == 0) {
+					continue;
+				}
+				if (labelFreq > maxFreq) {
+					maxFreq = labelFreq;					
+				}
+								
+			}			
+			purity = purity + ((double) maxFreq / allInstances)
+					* ((double) allInstances / data.getDataSetSize());			
+			
+		}		
+		this.cost = 1.0*(1-purity) + 1.0 *(areas / maxArea);		
+		this.purity = purity;		
+	}
+	
+//	private double laplasDistribution(double h, double x) {		
+//		double y = Math.exp(-1*h*Math.abs(x)) - (1/Math.exp(h));		
+//		return y;
+//	}
+//    
+//    private double log2(double N) {
+//		return Math.log(N)/Math.log(2);
+//	}
+
+	private double[] extractCutPoints(int[] array) {
+		double[] ct = new double[array.length];
+		for(int i = 0 ; i<array.length ; i++) {
+			ct[i] = cutPoints[i][array[i]];
+		}
+		return ct;
+	}    
+
+    public double getCost() {
+        return cost;
+    }
+
+    public void setCost(double mCost) {
+        this.cost = mCost;
+    }
+    
+    public double getSelectionProbability() {
+        return selectionProbability;
+    }
+
+    public void setSelectionProbability(double mSelectionProbability) {
+        this.selectionProbability = mSelectionProbability;
+    }
+
+    public double getFitness() {
+        return fitness;
+    }
+
+    public void setFitness(double mFitness) {
+        this.fitness = mFitness;
+    }
+
+    public int getNumNectar(int index) {
+        return numNectar[index];
+    }
+    
+    public int[] getNumNectar() {
+    	return this.numNectar;
+    }     
+    
+    public void setNumNectar(int index, int value) {
+        this.numNectar[index] = value;
+    }
+    
+    public int getTrials() {
+        return trials;
+    }
+
+    public void setTrials(int trials) {
+        this.trials = trials;
+    }       
+}
+
+========================================
+File: C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\src\Main.java
+========================================
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.LinkedList;
+
+public class Main {
+	static LinkedList<String> logs = new LinkedList<>();
+	static double hundredRunRuleCountBeforePruning = 0;
+	static double hundredRunRuleCountAfterPruning = 0;
+	static double hundredRunAccuracyBeforePruning = 0;
+	static double hundredRunAccuracyAfterPruning = 0;
+	static double hundredRunSelectedFeatures = 0;
+	static double hundredRunRuleLengthAfterPruning = 0;
+
+	public static void main(String[] args) throws Exception {
+//		File f = new File("./data set");
+//		String[] list = f.list();
+//		for(String datasetName : list) {
+//			hundredRunRuleCountBeforePruning = 0;
+//			hundredRunRuleCountAfterPruning = 0;
+//			hundredRunAccuracyBeforePruning = 0;
+//			hundredRunAccuracyAfterPruning = 0;
+//			hundredRunSelectedFeatures = 0;
+//			hundredRunRuleLengthAfterPruning = 0;
+//			logs.clear();
+//			controller(datasetName);
+//		}
+		controller("Iris");
+	}
+
+	private static void controller(String dbName) throws Exception {
+		String dbPath = "./data set/";
+		OutputWriter.dbName = dbName;
+		OutputWriter.path = dbPath;
+		boolean saveLogs = true;
+		boolean tenRun = true;
+		if (saveLogs) {
+			File f = new File(String.format("%s/%s/logs", dbPath, dbName));
+			if (!f.exists()) {
+				f.mkdir();
+				for (int i = 1; i <= 10; i++) {
+					new File(String.format("%s/%s/logs/shuffle-%d", dbPath, dbName, i)).mkdir();
+					for (int j = 1; j <= 10; j++) {
+						new File(String.format("%s/%s/logs/shuffle-%d/fold-%d", dbPath, dbName, i, j)).mkdir();
+					}
+				}
+			} else {
+				OutputWriter.removeDirectoryFiles(f);
+			}
+		}
+		if (tenRun) {
+			for (int i = 1; i <= 10; i++) {
+				String path = String.format("%s/%s/%s/shuffle-%d", dbPath, dbName, dbName, i);
+				OutputWriter.shuffleId = i;
+				logs.add(String.format("version %d : \n\n", i));
+				System.out.print(String.format("version %d : \n\n", i));
+				run(path, true, saveLogs);
+				logs.add("####################################\n");
+			}
+		} else {
+			String path = String.format("%s/%s/%s/shuffle-%d", dbPath, dbName, dbName, 1);
+			OutputWriter.shuffleId = 1;
+			run(path, true, saveLogs);
+		}
+		logs.add("\nresult for 100 runs\n");
+		logs.add(String.format("final rule count before pruning in 100 runs : %5.2f\n",
+				hundredRunRuleCountBeforePruning / 10));
+		logs.add(String.format("final rule count after pruning in 100 runs : %5.2f\n",
+				hundredRunRuleCountAfterPruning / 10));
+		logs.add(String.format("final accuracy before pruning in 100 runs : %5.2f\n",
+				hundredRunAccuracyBeforePruning / 10));
+		logs.add(String.format("final accuracy after pruning in 100 runs : %5.2f\n",
+				hundredRunAccuracyAfterPruning / 10));
+		logs.add(String.format("final rule length after pruning in 100 runs : %5.2f\n",
+				hundredRunRuleLengthAfterPruning / 10));
+		logs.add(String.format("final selected features in 100 runs : %5.2f\n", hundredRunSelectedFeatures / 10));
+
+		System.out.print("\nresult for 100 runs\n");
+		System.out.print(String.format("final rule count before pruning in 100 runs : %5.2f\n",
+				hundredRunRuleCountBeforePruning / 10));
+		System.out.print(String.format("final rule count after pruning in 100 runs : %5.2f\n",
+				hundredRunRuleCountAfterPruning / 10));
+		System.out.print(String.format("final accuracy before pruning in 100 runs : %5.2f\n",
+				hundredRunAccuracyBeforePruning / 10));
+		System.out.print(String.format("final accuracy after pruning in 100 runs : %5.2f\n",
+				hundredRunAccuracyAfterPruning / 10));
+		System.out.print(String.format("final rule length after pruning in 100 runs : %5.2f\n",
+				hundredRunRuleLengthAfterPruning / 10));
+		System.out
+				.print(String.format("final selected features in 100 runs : %5.2f\n", hundredRunSelectedFeatures / 10));
+		if (saveLogs) {
+			OutputWriter.resultWriter(logs);
+		}
+	}
+
+	private static void run(String path, boolean isTenFold, boolean saveLogs) throws Exception {
+		OutputWriter.removeDirectoryFiles(new File("final rules"));
+		OutputWriter.removeDirectoryFiles(new File("logs"));
+		OutputWriter.removeDirectoryFiles(new File("k-fold data"));
+		OutputWriter.removeDirectoryFiles(new File("selectedFeatures"));
+		double[][] cutPoints = null;
+		double finalAccuracyBeforePruning = 0;
+		double finalRuleCountsBeforePruning = 0;
+		double finalRuleCountsAfterPruning = 0;
+		double finalRuleLengthAfterPruning = 0;
+		double finalSelectedFeaturesCounts = 0;
+		double finalAccuracyAfterPruning = 0;
+		DataSet[][] data = null;
+		if (isTenFold) {
+			data = OpenData.get10FoldDataSet(path);
+		} else {
+			data = OpenData.getDataSet(path + "\\fold-" + 1);
+		}
+		int folds = 10;
+
+		long startTime = System.currentTimeMillis();
+		for (int i = 0; i < data[0].length; i++) {
+			logs.add(String.format("\trun %d\n", i + 1));
+			if (Data.getNumOfNumericalFeatures() > 0) {
+				cutPoints = new double[Data.getNumOfNumericalFeatures()][];
+				for (int j = 0; j < Data.getNumOfNumericalFeatures(); j++) {
+					cutPoints[j] = findInitialCutPoints(data[0][i], j);
+//				cutPoints[j] = findInitialCutPoints2(data[0][i],j); 
+				}
+			} else {
+				cutPoints = null;
+			}
+			System.out.println("\tfold " + (i + 1));
+			ArtificialBeeColony abc = new ArtificialBeeColony(data[0][i], cutPoints);
+			abc.algorithm();
+
+			logs.add("\n\t\tbefore pruning\n");
+			System.out.print("\n\t\tbefore pruning\n");
+			ArrayList<Area> areas = abc.getRule(i);
+			logs.add(String.format("\t\t\trules count before pruning : %d\n", areas.size()));
+			System.out.println("\t\t\trules count before pruning: " + areas.size());
+			double accuracyBeforePruning = test(data[1][i], areas, true);
+			logs.add(String.format("\t\t\tAccuracy before pruning : %5.2f\n", accuracyBeforePruning));
+			System.out.println("\t\t\tAccuracy before pruning : " + accuracyBeforePruning);
+
+			logs.add("\n\t\tafter pruning\n");
+			System.out.print("\n\t\tafter pruning\n");
+			ArrayList<Area> prunedAreas = prune(areas);
+			double ruleLenAfterPruning = 0;
+			for (Area ar : prunedAreas) {
+				ruleLenAfterPruning += ar.selectedFeatures.size();
+			}
+			ruleLenAfterPruning /= prunedAreas.size();
+			logs.add(String.format("\t\t\trules count after pruning : %d\n", prunedAreas.size()));
+			System.out.println("\t\t\trules count after pruning : " + prunedAreas.size());
+			double accuracyAfterPruning = test(data[1][i], prunedAreas, true);
+			logs.add(String.format("\t\t\tAccuracy after pruning : %5.2f\n", accuracyAfterPruning));
+			logs.add(String.format("\t\t\trules Length after pruning : %5.2f\n", ruleLenAfterPruning));
+			System.out.println("\t\t\tAccuracy after pruning : " + accuracyAfterPruning);
+			System.out.print("\t*******************************************\n");
+
+			if (saveLogs) {
+				OutputWriter.finalAreasWriter(areas, false, i);
+				OutputWriter.finalAreasWriter(prunedAreas, true, i);
+			}
+
+			logs.add(String.format("\n\t\tnumber of selected features : %d\n", areas.get(0).selectedFeatures.size()));
+			logs.add("\t*******************************************\n");
+
+			finalSelectedFeaturesCounts += areas.get(0).selectedFeatures.size();
+			finalRuleCountsBeforePruning += areas.size();
+			finalRuleCountsAfterPruning += prunedAreas.size();
+			finalRuleLengthAfterPruning += ruleLenAfterPruning;
+			finalAccuracyBeforePruning += accuracyBeforePruning;
+			finalAccuracyAfterPruning += accuracyAfterPruning;
+		}
+		hundredRunRuleCountBeforePruning += (finalRuleCountsBeforePruning / folds);
+		hundredRunRuleCountAfterPruning += (finalRuleCountsAfterPruning / folds);
+		hundredRunAccuracyBeforePruning += (finalAccuracyBeforePruning / folds);
+		hundredRunAccuracyAfterPruning += (finalAccuracyAfterPruning / folds);
+		hundredRunSelectedFeatures += (finalSelectedFeaturesCounts / folds);
+		hundredRunRuleLengthAfterPruning += (finalRuleLengthAfterPruning / folds);
+		logs.add("\t*******************************************\n");
+		logs.add("\t10-fold result\n");
+		logs.add(String.format("\t\tfinal Rule Counts before pruning : %5.2f\n", finalRuleCountsBeforePruning / folds));
+		logs.add(String.format("\t\tfinal Rule Counts after pruning : %5.2f\n", finalRuleCountsAfterPruning / folds));
+		logs.add(String.format("\t\tfinal Accuracy before pruning : %5.2f\n", finalAccuracyBeforePruning / folds));
+		logs.add(String.format("\t\tfinal Accuracy after pruning : %5.2f\n", finalAccuracyAfterPruning / folds));
+		logs.add(String.format("\t\tfinal Rule Length after pruning : %5.2f\n", finalRuleLengthAfterPruning / folds));
+		logs.add(String.format("\t\tfinal selected features : %5.2f\n", finalSelectedFeaturesCounts / folds));
+		System.out.print("\t10-fold result\n");
+		System.out.println("\t\tfinal Accuracy before pruning : " + (finalAccuracyBeforePruning / folds));
+		System.out.println("\t\tfinal Rule Counts before pruning: " + (finalRuleCountsBeforePruning / folds));
+		System.out.println("\t\tfinal selected features : " + (finalSelectedFeaturesCounts / folds));
+		System.out.println("\t\tfinal Accuracy after pruning : " + (finalAccuracyAfterPruning / folds));
+		System.out.println("\t\tfinal Rule Counts after pruning : " + (finalRuleCountsAfterPruning / folds));
+		System.out.println("\n########################################################\n");
+		long endTime = System.currentTimeMillis();
+		long executeTime = (endTime - startTime) / 1000;
+		System.out.println(String.format("%d\' : %d\"\n", executeTime / 60, executeTime % 60));
+	}
+
+	private static ArrayList<Area> prune(ArrayList<Area> areas) {
+		ArrayList<Integer> sf = areas.get(0).selectedFeatures;
+		double[] cutPoints = areas.get(0).cutPoints;
+		ArrayList<Area> newAreas = new ArrayList<>();
+		ArrayList<String>[] arr = new ArrayList[Data.getLabelInterval()];
+		for (int c = 0; c < Data.getLabelInterval(); c++) {
+			arr[c] = new ArrayList<String>();
+		}
+		for (int i = 0; i < areas.size(); i++) {
+			for (int c = 0; c < Data.getLabelInterval(); c++) {
+				if (c + 1 == areas.get(i).getLable()) {
+					arr[c].add(areas.get(i).getAreaCode());
+					break;
+				}
+			}
+		}
+		for (int c = 0; c < Data.getLabelInterval(); c++) {
+			String[] strs = new String[arr[c].size()];
+			arr[c].toArray(strs);
+			QuineMcCluskey qc = new QuineMcCluskey(strs, sf.size());
+			LinkedList<char[]> newIdentifiers = qc.getPIs();
+			for (char[] id : newIdentifiers) {
+				Area na = new Area();
+				StringBuilder st = new StringBuilder();
+				ArrayList<Double> cp = new ArrayList<>();
+				for (int i = 0; i < id.length; i++) {
+					if (id[i] != '#') {
+						st.append(id[i]);
+						na.selectedFeatures.add(sf.get(i));
+						cp.add(cutPoints[i]);
+					}
+				}
+				na.cutPoints = new double[na.selectedFeatures.size()];
+				for (int i = 0; i < cp.size(); i++) {
+					na.cutPoints[i] = cp.get(i);
+				}
+				na.setAreaCode(st.toString());
+				na.setLable(c + 1);
+				newAreas.add(na);
+			}
+		}
+		return newAreas;
+	}
+
+	private static double[] findInitialCutPoints(DataSet trainSet, int feature) {
+		DataSet data = trainSet;
+		double featureCutPoints[] = null;
+		HashSet<Double> fv = new HashSet<>();
+		ArrayList<Double> featureValues = null;
+		for (int i = 0; i < data.getDataSetSize(); i++) {
+			fv.add(data.getData(i).numericalFeatures[feature]);
+		}
+
+		featureValues = new ArrayList<>(fv);
+		double max = -1 * Double.MAX_VALUE;
+		double min = Double.MAX_VALUE;
+		for (double f : featureValues) {
+			if (f > max) {
+				max = f;
+			}
+			if (f < min) {
+				min = f;
+			}
+		}
+		featureValues.add(min - 1);
+		featureValues.add(max + 1);
+		Data.setNumericalFeatureMax(feature, max);
+		Data.setNumericalFeatureMin(feature, min);
+		Collections.sort(featureValues);
+
+		featureCutPoints = new double[featureValues.size() - 1];
+		for (int i = 0; i < featureValues.size() - 1; i++) {
+			featureCutPoints[i] = (featureValues.get(i) + featureValues.get(i + 1)) / 2.0;
+		}
+
+		return featureCutPoints;
+	}
+
+//	private static double[] findInitialCutPoints2(DataSet trainSet, int feature) {
+//		DataSet data = trainSet;
+//		double featureCutPoints[] = null;
+//		ArrayList<KV> featureValues = new ArrayList<KV>();
+//		for (int i = 0; i < data.getDataSetSize(); i++) {
+//			KV k = new KV();
+//			k.value = data.getData(i).numericalFeatures[feature];
+//			k.lable = data.getData(i).label;
+//			featureValues.add(k);
+//		}
+//		double max = -1 * Double.MAX_VALUE;
+//		double min = Double.MAX_VALUE;
+//		for (KV f : featureValues) {
+//			if (f.value > max) {
+//				max = f.value;
+//			}
+//			if (f.value < min) {
+//				min = f.value;
+//			}
+//		}
+//		KV m1 = new KV();
+//		m1.value = min - 1;
+//		m1.lable = -1;
+//		featureValues.add(m1);
+//		KV m2 = new KV();
+//		m2.value = max + 1;
+//		m2.lable = -1;
+//		featureValues.add(m2);
+//		Data.setNumericalFeatureMax(feature, max);
+//		Data.setNumericalFeatureMin(feature, min);
+//		Collections.sort(featureValues);
+//		LinkedList<Double> cps = new LinkedList<>();
+//		int counter1 = 0;
+//		int counter2 = 0;
+//		while (counter1 < featureValues.size() - 1) {
+//			if (featureValues.get(counter1).value != featureValues.get(counter1 + 1).value
+//					&& featureValues.get(counter1).lable != featureValues.get(counter1 + 1).lable) {
+//				cps.add((featureValues.get(counter1).value + featureValues.get(counter1 + 1).value) / 2.0);
+//				counter1++;
+//			} else if (featureValues.get(counter1).value == featureValues.get(counter1 + 1).value) {
+//				counter2 = counter1;
+//				boolean labelChanged = false;
+//				while (counter2 + 1 < featureValues.size()
+//						&& featureValues.get(counter2 + 1).value == featureValues.get(counter1).value) {
+//					if (featureValues.get(counter2 + 1).lable != featureValues.get(counter1).lable) {
+//						labelChanged = true;
+//					}
+//					counter2++;
+//				}
+//				if (!labelChanged) {
+//					counter1 = counter2;
+//				} else {
+//					cps.add((featureValues.get(counter2 + 1).value + featureValues.get(counter2).value) / 2.0);
+//					counter1 = counter2 + 1;
+//				}
+//			} else {
+//				counter2 = counter1 + 1;
+//				boolean labelChanged = false;
+//				while (counter2 + 1 < featureValues.size()
+//						&& featureValues.get(counter2 + 1).value == featureValues.get(counter1 + 1).value) {
+//					if (featureValues.get(counter2 + 1).lable != featureValues.get(counter1 + 1).lable) {
+//						labelChanged = true;
+//					}
+//					counter2++;
+//				}
+//				if (counter1 + 1 == counter2) {
+//					counter1++;
+//				} else {
+//					if (!labelChanged) {
+//						counter1 = counter2;
+//					} else {
+//						cps.add((featureValues.get(counter1).value + featureValues.get(counter1 + 1).value) / 2.0);
+//						cps.add((featureValues.get(counter2 + 1).value + featureValues.get(counter2).value) / 2.0);
+//						counter1 = counter2 + 1;
+//					}
+//				}
+//			}
+//		}
+//		featureCutPoints = new double[cps.size()];
+//		for (int i = 0; i < cps.size(); i++) {
+//			featureCutPoints[i] = cps.get(i);
+//		}
+//		return featureCutPoints;
+//	}
+
+	public static double test(DataSet testSet, ArrayList<Area> areas, boolean cm) {
+
+		int[][] confusionMatrix = new int[Data.getLabelInterval()][Data.getLabelInterval()];
+		int trupos = 0;
+		int uncoveredInstances = 0;
+		int correctlyLabeledUncoveredInstances = 0;
+		for (int testCounter = 0; testCounter < testSet.getDataSetSize(); testCounter++) {
+			int seen = 0;
+			int lable = -1;
+			int minDiff = Integer.MAX_VALUE;
+			LinkedList<Integer> bestRules = new LinkedList<>();
+			for (int ruleCoun = 0; ruleCoun < areas.size(); ruleCoun++) {
+				Area area = areas.get(ruleCoun);
+				int diff = 0;
+				if (area.remove) {
+					continue;
+				}
+				for (int k = 0; k < area.selectedFeatures.size(); k++) {
+					int f = area.selectedFeatures.get(k);
+					if (testSet.getData(testCounter).numericalFeatures[f] <= area.cutPoints[k]
+							&& area.getAreaCode().charAt(k) == '0') {
+						continue;
+					} else if (testSet.getData(testCounter).numericalFeatures[f] > area.cutPoints[k]
+							&& area.getAreaCode().charAt(k) == '1') {
+						continue;
+					} else {
+						diff++;
+					}
+				}
+				if (diff == 0) {
+					lable = area.getLable();
+					seen = 1;
+					break;
+				}
+				if (diff < minDiff) {
+					minDiff = diff;
+					bestRules.clear();
+					bestRules.add(area.getLable());
+				} else if (diff == minDiff) {
+					bestRules.add(area.getLable());
+				}
+			}
+
+			if (seen == 0) {
+				lable = -1;
+				int max = 0;
+				for (int c = 0; c < Data.getLabelInterval(); c++) {
+					int freq = Collections.frequency(bestRules, c + 1);
+					if (freq > max) {
+						max = freq;
+						lable = c + 1;
+					}
+				}
+				uncoveredInstances++;
+				if (lable == testSet.getData(testCounter).label) {
+					correctlyLabeledUncoveredInstances++;
+				}
+			}
+
+			if (lable == testSet.getData(testCounter).label) {
+				trupos++;
+
+			}
+			confusionMatrix[lable - 1][testSet.getData(testCounter).label - 1]++;
+		}
+		double accuracy = (double) trupos * 100 / testSet.getDataSetSize();
+		if (uncoveredInstances != 0) {
+			System.out.println(String.format(
+					"\t\t\tNote: %d of the test instances were not covered by the existing rules.\n\t\t\tthe algorithm assigned them to the closest rule and %d of them were correctly labeled.",
+					uncoveredInstances, correctlyLabeledUncoveredInstances));
+			logs.add(String.format(
+					"\t\t\tNote: %d of the test instances were not covered by the existing rules.\n\t\t\tthe algorithm assigned them to the closest rule and %d of them were correctly labeled.\n",
+					uncoveredInstances, correctlyLabeledUncoveredInstances));
+		}
+		if (cm) {
+			logs.add("\t\t\t(confusionMatrix) : \n");
+			logs.add("\t\t\t                Actual\n");
+			System.out.println("\t\t\t(confusionMatrix) : ");
+			System.out.println("\t\t\t                Actual");
+			for (int i = 0; i < Data.getLabelInterval(); i++) {
+				if (i + 1 == (Data.getLabelInterval() / 2 + 1)) {
+					logs.add("\t\t\tpredicted   ");
+					System.out.print("\t\t\tpredicted   ");
+				} else {
+					logs.add("\t\t\t            ");
+					System.out.print("\t\t\t            ");
+				}
+				for (int j = 0; j < Data.getLabelInterval(); j++) {
+					logs.add(confusionMatrix[i][j] + "    ");
+					System.out.print(confusionMatrix[i][j] + "    ");
+				}
+				logs.add("\n");
+				System.out.println();
+			}
+		}
+		return accuracy;
+	}
+}
+
+//class KV implements Comparable<KV> {
+//	double value;
+//	int lable;
+//
+//	@Override
+//	public int compareTo(KV arg) {		
+//		if (this.value < arg.value) {
+//			return -1;
+//		} else if (this.value > arg.value) {
+//			return 1;
+//		}
+//		return 0;
+//	}
+//
+//	@Override
+//	public int hashCode() {
+//		// TODO Auto-generated method stub
+//		return Double.hashCode(this.value);
+//	}
+//}
+
+
+========================================
+File: C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\src\OpenData.java
+========================================
+import java.io.FileReader;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.Map;
+import java.util.Scanner;
+
+public class OpenData {
+	
+	public OpenData(){		
+	}
+	
+	public static DataSet[][] get10FoldDataSet(String path) throws Exception{
+		DataSet[][] data = null;		
+		data = new DataSet[2][10];
+		for(int f = 0 ; f < 10 ; f++) {
+			String trainPath = String.format(path+"/fold-%d/train.arff", f+1);
+			String testPath = String.format(path+"/fold-%d/test.arff", f+1);
+			data[0][f] = readData(trainPath);
+			data[1][f] = readData(testPath);
+		}
+		Data.setNumericalFeatureMaxs(new double[Data.getNumOfNumericalFeatures()]);
+		Data.setNumericalFeatureMins(new double[Data.getNumOfNumericalFeatures()]);
+		//findMinAndMax(data[0][0], data[1][0]);
+		return data;
+	}
+	public static DataSet[][] getDataSet(String path) throws Exception{
+		DataSet[][] data = null;
+		data = new DataSet[2][1];
+		String trainPath = path+"\\train.arff";
+		String testPath = path+"\\test.arff";
+		data[0][0] = readData(trainPath);
+		data[1][0] = readData(testPath);
+		Data.setNumericalFeatureMaxs(new double[Data.getNumOfNumericalFeatures()]);
+		Data.setNumericalFeatureMins(new double[Data.getNumOfNumericalFeatures()]);
+		//findMinAndMax(data[0][0], data[1][0]);
+		return data;
+	}
+//	private static void findMinAndMax(DataSet train, DataSet test) {
+//		double[] min = new double[Data.getNumOfNumericalFeatures()];
+//		double[] max = new double[Data.getNumOfNumericalFeatures()];
+//		for(int i = 0 ; i < Data.getNumOfNumericalFeatures() ; i++) {
+//			min[i] = Double.MAX_VALUE;
+//			max[i] = -1 * Double.MAX_VALUE;
+//		}
+//		for(int j = 0 ; j < train.getDataSetSize(); j++) {
+//			Data d = train.getData(j);
+//			for(int i = 0 ; i < Data.getNumOfNumericalFeatures() ; i++) {
+//				if(d.numericalFeatures[i] < min[i]) {
+//					min[i] = d.numericalFeatures[i];
+//				}
+//				if(d.numericalFeatures[i] > max[i]) {
+//					max[i] = d.numericalFeatures[i];
+//				}
+//			}
+//		}
+//		for(int j = 0 ; j < test.getDataSetSize(); j++) {
+//			Data d = test.getData(j);
+//			for(int i = 0 ; i < Data.getNumOfNumericalFeatures() ; i++) {
+//				if(d.numericalFeatures[i] < min[i]) {
+//					min[i] = d.numericalFeatures[i];
+//				}
+//				if(d.numericalFeatures[i] > max[i]) {
+//					max[i] = d.numericalFeatures[i];
+//				}
+//			}
+//		}
+//		Data.setNumericalFeatureMaxs(max);
+//		Data.setNumericalFeatureMins(min);
+//	}
+	private static DataSet readData(String path) throws Exception{		
+		LinkedList<String> features = new LinkedList<>();		
+		FileReader reader = new FileReader(path);
+		Scanner input = new Scanner(reader);		
+		
+		while(input.hasNext() && true) {
+			String line = input.nextLine();
+			if(line.startsWith("%") || line.trim().equals("")) {
+				continue;
+			}
+			if(line.trim().toLowerCase().equals("@data")) {
+				break;
+			}
+			if(line.startsWith("@")) {
+				features.add(line);
+				continue;
+			}
+		}
+		String lables = features.get(features.size()-1);		
+		int s = lables.indexOf('{');
+		int e = lables.indexOf('}');
+		String[] lablesArray = lables.substring(s+1, e).split(",");
+		features.remove(0);
+//		Data.setNumOfCategoricalFeatures(0);
+		Data.setNumOfNumericalFeatures(features.size()-1);
+		Data.setLabelInterval(lablesArray.length);
+		Map<String,Integer> lableMap = new HashMap<>();
+		for(int i = 0 ; i < lablesArray.length ; i++) {
+			lableMap.put(lablesArray[i].trim(), i+1);
+		}
+		DataSet dataSet = new DataSet();
+		Data d = null;
+		while(input.hasNext()) {
+			String line = input.nextLine();
+			if(line.trim().equals("") || line.startsWith("%")) {
+				continue;
+			}
+			String[] att = line.split(",");
+			if(att.length-1 != Data.getNumOfNumericalFeatures()) {
+				throw new Exception("dis match data size!");
+			}
+			d = new Data();
+			d.label = lableMap.get(att[att.length-1].trim());
+			for(int i = 0 ; i < Data.getNumOfNumericalFeatures(); i++) {
+				d.numericalFeatures[i] = Double.parseDouble(att[i]);				
+			}
+			dataSet.push(d);
+		}		
+		input.close();		
+		return dataSet;
+	}	
+}
+
+
+========================================
+File: C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\src\OutputWriter.java
+========================================
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedList;
+
+public class OutputWriter {
+	public static int shuffleId;
+	public static String dbName;
+	public static String path;
+
+	public static void finalAreasWriter(ArrayList<Area> areas, boolean pruned, int f) {
+		try {
+			String filePath = null;
+			if (pruned) {
+				filePath = String.format("%s/%s/logs/shuffle-%d/fold-%d/areas-after-pruning.txt", OutputWriter.path,
+						OutputWriter.dbName, OutputWriter.shuffleId, f + 1);
+			} else {
+				filePath = String.format("%s/%s/logs/shuffle-%d/fold-%d/areas-before-pruning.txt", OutputWriter.path,
+						OutputWriter.dbName, OutputWriter.shuffleId, f + 1);
+			}
+			FileWriter w = new FileWriter(filePath);
+			for (Area area : areas) {
+				int[] sf = new int[area.selectedFeatures.size()];
+				double[] roundedCutpoints = new double[area.selectedFeatures.size()];
+				for (int i = 0; i < area.selectedFeatures.size(); i++) {
+					sf[i] = area.selectedFeatures.get(i) + 1;
+					roundedCutpoints[i] = round(area.cutPoints[i], 2);
+				}
+				w.write(String.format(
+						"area : %s\tselectedFeatures : %s\tcutPoints : %s\tclass : %d\ttruePos : %d\tfalsePos : %d\n\n",
+						area.getAreaCode(), Arrays.toString(sf), Arrays.toString(roundedCutpoints), area.getLable(),
+						area.getTruePos(), area.getFalsePos()));
+			}
+			w.close();
+
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
+	public static double round(double number, int decimals) {
+		double out = number * Math.pow(10, decimals);
+		out = Math.round(out) / Math.pow(10, decimals);
+		return out;
+	}
+
+	public static void resultWriter(LinkedList<String> logs) {
+		String filePath = String.format("%s/%s/logs/finalResult.txt", OutputWriter.path, OutputWriter.dbName);
+		FileWriter w;
+		try {
+			w = new FileWriter(filePath);
+			for (String str : logs) {
+				w.write(str);
+			}
+			w.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
+	public static void removeDirectoryFiles(File file) {
+		if (file.isDirectory()) {
+			File[] dirs = file.listFiles();
+			for (File dir : dirs) {
+				removeDirectoryFiles(dir);
+			}
+		} else {
+			file.delete();
+		}
+	}
+
+}
+
+
+========================================
+File: C:\Users\user\Downloads\Telegram Desktop\MCRM Algorithm\thisismydmprj\MCRM\src\QuineMcCluskey.java
+========================================
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+
+public class QuineMcCluskey {
+	ArrayList<PrimeImplicant> primeImplicants = new ArrayList<>();	
+	HashSet<MinTerm> mintermSet = new HashSet<>();
+	int variablesCount;
+	public QuineMcCluskey(String[] minterms, int variablesCount) {		
+		initMinTerms(minterms);
+		this.variablesCount = variablesCount;
+	}
+	public LinkedList<char[]> getPIs() {
+		LinkedList<PrimeImplicant> pi = extractPrimeImplicant(variablesCount);		
+
+		LinkedList<PrimeImplicant> finalPIs = chooseMinPrimeImplicants(pi);
+		LinkedList<char[]> output = new LinkedList<>();
+		for(PrimeImplicant p : finalPIs) {
+			output.add(p.binaryForm);
+		}
+		return output;
+	}
+	private void initMinTerms(String[] minterms) {
+		for(String str : minterms) {
+			char[] bits = str.toCharArray();
+			MinTerm mt = new MinTerm(str);
+			PrimeImplicant pi = new PrimeImplicant();
+			pi.binaryForm = bits;
+			pi.minTerms.add(mt);
+			this.primeImplicants.add(pi);
+			this.mintermSet.add(mt);
+		}
+	}
+	private LinkedList<PrimeImplicant> chooseMinPrimeImplicants(LinkedList<PrimeImplicant> PIs){
+		LinkedList<PrimeImplicant> finalPIs = new LinkedList<PrimeImplicant>();
+		LinkedList<LinkedList<Integer>> coverTable = new LinkedList<>();
+		LinkedList<Integer> remainPIs = new LinkedList<>();
+		for(int i = 0; i < this.mintermSet.size(); i++) {
+			coverTable.add(new LinkedList<Integer>());
+		}
+		HashMap<MinTerm, Integer> mtMap = new HashMap<>();
+		int mtIndex = 0;
+		for(MinTerm mt : this.mintermSet) {
+			mtMap.put(mt, mtIndex++);
+		}
+		//initialize cover table
+		for(int i = 0; i < PIs.size(); i++) {
+			HashSet<MinTerm> st = PIs.get(i).minTerms;
+			remainPIs.add(i);
+			for(MinTerm x : st) {
+				if(mtMap.containsKey(x)) {
+					coverTable.get(mtMap.get(x)).add(i);
+				}
+			}
+		}
+		
+		while(true) {
+			int ittrator = 0;
+			while(ittrator < coverTable.size()) {
+				if(coverTable.get(ittrator).size() == 1) {
+					int epiIndex = coverTable.get(ittrator).get(0);
+					finalPIs.add(PIs.get(epiIndex));
+					coverTable.remove(ittrator);
+					remainPIs.remove(Integer.valueOf(epiIndex));
+					for(int i = coverTable.size()-1; i >=0 ; i--) {
+						if(findInList(coverTable.get(i), epiIndex) != -1) {
+							coverTable.remove(i);
+						}
+					}
+					ittrator = 0;
+				}else {
+					ittrator++;
+				}
+			}
+			if(coverTable.isEmpty()) {
+				break;
+			}
+			
+			boolean isCircle = true;
+			//match rows
+			HashSet<Integer> removePi = new HashSet<>();
+			LinkedList<Integer>[] rows = new LinkedList[2];
+			for(int i = 0; i < remainPIs.size()-1; i++) {
+				rows[0] = new LinkedList<Integer>();
+				for(int t = 0; t < coverTable.size(); t++) {
+					if(findInList(coverTable.get(t), remainPIs.get(i)) != -1) {
+						rows[0].add(t);
+					}
+				}
+				for(int j = i+1; j < remainPIs.size(); j++) {
+					rows[1] = new LinkedList<Integer>();
+					for(int t = 0; t < coverTable.size(); t++) {
+						if(findInList(coverTable.get(t), remainPIs.get(j)) != -1) {
+							rows[1].add(t);
+						}
+					}
+					int lrow;
+					int hrow;
+					if(rows[0].size() >= rows[1].size()) {
+						lrow = 1;
+						hrow = 0;
+					}else {
+						lrow = 0;
+						hrow = 1;
+					}
+					int coverCounter =  0;
+					int lCounter = 0;
+					int hCounter = 0;
+					while(lCounter < rows[lrow].size() && hCounter < rows[hrow].size()) {
+						if(rows[lrow].get(lCounter) == rows[hrow].get(hCounter)) {
+							lCounter++;
+							hCounter++;
+							coverCounter++;
+						}else {
+							hCounter++;
+						}
+					}
+					if(rows[lrow].size() == coverCounter) {
+						if(lrow == 0) {
+							removePi.add(remainPIs.get(i));
+						}else {
+							removePi.add(remainPIs.get(j));
+						}						
+					}
+				}
+			}
+			if(removePi.size()>0) {	
+				isCircle = false;
+				for(Integer x : removePi) {
+					for(int i = 0; i < coverTable.size(); i++) {
+						int index = findInList(coverTable.get(i), x);
+						if(index != -1) {
+							coverTable.get(i).remove(index);
+						}
+					}
+					remainPIs.remove(x);
+				}
+			}
+			//match columns
+			HashSet<Integer> removeIndex = new HashSet<>();
+			for(int i = 0; i < coverTable.size()-1; i++) {
+				for(int j = i+1; j < coverTable.size(); j++) {
+					int lCol;
+					int hCol;
+					if(coverTable.get(i).size() >= coverTable.get(j).size()) {
+						lCol = j;
+						hCol = i;
+					}else {
+						lCol = i;
+						hCol = j;
+					}
+					int coverCounter =  0;
+					int lCounter = 0;
+					int hCounter = 0;
+					while(lCounter < coverTable.get(lCol).size() && hCounter < coverTable.get(hCol).size()) {
+						if(coverTable.get(lCol).get(lCounter) == coverTable.get(hCol).get(hCounter)) {
+							lCounter++;
+							hCounter++;
+							coverCounter++;
+						}else {
+							hCounter++;
+						}
+					}
+					if(coverTable.get(lCol).size() == coverCounter) {
+						removeIndex.add(hCol);
+					}
+				}
+			}
+			if(removeIndex.size()>0) {
+				isCircle = false;
+				Integer[] ri = new Integer[removeIndex.size()];
+				removeIndex.toArray(ri);
+				Arrays.sort(ri);
+				for(int i = ri.length-1; i >= 0; i--) {
+					coverTable.remove(ri[i].intValue());
+				}
+			}
+			//handle circle
+			if(isCircle) {
+				Integer selectedPi = remainPIs.get(0);
+				for(int i = coverTable.size()-1; i >=0 ; i--) {
+					int index = findInList(coverTable.get(i), selectedPi);
+					if(index != -1) {
+						coverTable.remove(i);
+					}
+				}
+				finalPIs.add(PIs.get(selectedPi.intValue()));
+				remainPIs.remove(selectedPi);
+			}
+		}		
+		return finalPIs;
+	}
+	private LinkedList<PrimeImplicant> extractPrimeImplicant(int variablesCount) {
+		LinkedList<PrimeImplicant> PIs = new LinkedList<>();
+		LinkedList<PrimeImplicant>[] groups = null;
+		LinkedList<PrimeImplicant>[] groups2 = null;
+		groups = new LinkedList[variablesCount+1];
+		for(int i = 0; i < variablesCount+1; i++) {
+			groups[i] = new LinkedList<PrimeImplicant>();
+		}
+		for(PrimeImplicant pi : primeImplicants) {
+			int count = 0;
+			for(char ch : pi.binaryForm) {
+				if(ch == '1') {
+					count++;
+				}
+			}
+			groups[count].add(pi);
+		}
+		while (true) {
+			LinkedList<Integer> activeGroups = new LinkedList<>();
+			for(int i = 0; i < groups.length; i++) {
+				if(groups[i].size() > 0) {
+					activeGroups.add(i);
+				}
+			}
+			if(activeGroups.isEmpty()) {
+				break;
+			}else if(activeGroups.size() == 1) {
+				for(PrimeImplicant pi : groups[activeGroups.get(0)]) {
+					PIs.add(pi);
+				}	
+				break;
+			}			
+			groups2 = new LinkedList[groups.length - 1];
+			for (int i = 0; i < groups2.length; i++) {
+				groups2[i] = new LinkedList<PrimeImplicant>();
+			}
+			for(int i = 0; i < activeGroups.size()-1; i++) {
+				int g1 = activeGroups.get(i);
+				int g2 = activeGroups.get(i+1);
+				if(g2 - g1 != 1) {
+					for(int f = 0; f < groups[g1].size(); f++) {
+						if(!groups[g1].get(f).selected) {
+							PIs.add(groups[g1].get(f));
+						}
+					}
+					continue;
+				}
+				for(int j = 0; j < groups[g1].size(); j++) {					
+					for(int k = 0; k < groups[g2].size(); k++) {
+						int index = findDiff(groups[g1].get(j).binaryForm, groups[g2].get(k).binaryForm);
+						if(index != -1) {							
+							groups[g1].get(j).selected = true;
+							groups[g2].get(k).selected = true;
+							PrimeImplicant newPi = new PrimeImplicant();
+							char[] bins = new char[variablesCount];
+							for(int t = 0; t < bins.length; t++) {
+								bins[t] = groups[g1].get(j).binaryForm[t];
+							}
+							bins[index] = '#';
+							newPi.binaryForm = bins;
+							newPi.minTerms.addAll(groups[g1].get(j).minTerms);
+							newPi.minTerms.addAll(groups[g2].get(k).minTerms);
+							if(!findInGroup(groups2[g1], newPi)) {
+								groups2[g1].add(newPi);								
+							}
+						}
+					}					
+				}
+				for(int f = 0; f < groups[g1].size(); f++) {
+					if(!groups[g1].get(f).selected) {
+						PIs.add(groups[g1].get(f));
+					}
+				}
+			}
+			int g1 = activeGroups.get(activeGroups.size()-1);
+			for(int f = 0; f < groups[g1].size(); f++) {
+				if(!groups[g1].get(f).selected) {
+					PIs.add(groups[g1].get(f));
+				}
+			}			
+			groups = groups2;				
+		}
+		return PIs;
+	}
+	private <T extends Number> int findInList(LinkedList<? extends Number> arr, T element) {
+		int index = -1;
+		for(int i = 0; i < arr.size(); i++) {
+			if(arr.get(i).doubleValue() == element.doubleValue()) {
+				index = i;
+				break;
+			}
+		}
+		return index;
+	}
+	private boolean findInGroup(LinkedList<PrimeImplicant> g, PrimeImplicant mt) {
+		for(PrimeImplicant m : g) {
+			if(Arrays.equals(m.binaryForm, mt.binaryForm)) {
+				return true;
+			}
+		}
+		return false;
+	}
+	private static int findDiff(char[] a1, char[] a2) {
+		int diffCount = 0;
+		int diffIndex = -1;
+		for(int i = 0 ; i < a1.length ; i++) {
+			if(a1[i] != a2[i]) {
+				diffCount++;
+				diffIndex = i;
+			}
+		}
+		if(diffCount>1) {
+			return -1;
+		}else {
+			return diffIndex;
+		}
+	} 	
+}
+
+class PrimeImplicant{
+	char[] binaryForm;
+	HashSet<MinTerm> minTerms = new HashSet<>();
+	boolean selected = false;
+	public PrimeImplicant() {}
+}
+
+class MinTerm{
+	String binaryForm;
+	public MinTerm(String binaryForm) {
+		this.binaryForm = binaryForm;
+	}
+	@Override
+	public int hashCode() {		
+		return FNVHash.hash32(binaryForm);
+	}
+	@Override
+	public boolean equals(Object obj) {
+		MinTerm mt = (MinTerm)obj;
+		return this.binaryForm.equals(mt.binaryForm);
+	}
+}
