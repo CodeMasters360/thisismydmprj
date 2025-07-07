@@ -1,6 +1,6 @@
-area : 10	selectedFeatures : [3, 4]	cutPoints : [2.45, 1.75]	class : 2	truePos : 45	falsePos : 5
+area : 10	selectedFeatures : [3, 4]	cutPoints : [2.45, 1.65]	class : 2	truePos : 44	falsePos : 4
 
-area : 00	selectedFeatures : [3, 4]	cutPoints : [2.45, 1.75]	class : 1	truePos : 45	falsePos : 0
+area : 00	selectedFeatures : [3, 4]	cutPoints : [2.45, 1.65]	class : 1	truePos : 45	falsePos : 0
 
-area : 11	selectedFeatures : [3, 4]	cutPoints : [2.45, 1.75]	class : 3	truePos : 39	falsePos : 1
+area : 11	selectedFeatures : [3, 4]	cutPoints : [2.45, 1.65]	class : 3	truePos : 40	falsePos : 2
 
