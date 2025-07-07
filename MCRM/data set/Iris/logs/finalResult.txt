@@ -145,18 +145,18 @@ version 1 :
 			(confusionMatrix) : 
 			                Actual
 			            2    0    0    
-			predicted   0    8    1    
-			            0    0    4    
-			Accuracy before pruning : 93.33
+			predicted   0    8    2    
+			            0    0    3    
+			Accuracy before pruning : 86.67
 
 		after pruning
 			rules count after pruning : 3
 			(confusionMatrix) : 
 			                Actual
 			            2    0    0    
-			predicted   0    8    1    
-			            0    0    4    
-			Accuracy after pruning : 93.33
+			predicted   0    8    2    
+			            0    0    3    
+			Accuracy after pruning : 86.67
 			rules Length after pruning :  2.00
 
 		number of selected features : 2
@@ -234,8 +234,8 @@ version 1 :
 	10-fold result
 		final Rule Counts before pruning :  3.00
 		final Rule Counts after pruning :  3.00
-		final Accuracy before pruning : 94.67
-		final Accuracy after pruning : 94.67
+		final Accuracy before pruning : 94.00
+		final Accuracy after pruning : 94.00
 		final Rule Length after pruning :  2.00
 		final selected features :  2.00
 ####################################
@@ -317,18 +317,18 @@ version 2 :
 			(confusionMatrix) : 
 			                Actual
 			            3    0    0    
-			predicted   0    8    0    
-			            0    1    3    
-			Accuracy before pruning : 93.33
+			predicted   0    9    0    
+			            0    0    3    
+			Accuracy before pruning : 100.00
 
 		after pruning
 			rules count after pruning : 3
 			(confusionMatrix) : 
 			                Actual
 			            3    0    0    
-			predicted   0    8    0    
-			            0    1    3    
-			Accuracy after pruning : 93.33
+			predicted   0    9    0    
+			            0    0    3    
+			Accuracy after pruning : 100.00
 			rules Length after pruning :  2.00
 
 		number of selected features : 2
@@ -475,8 +475,8 @@ version 2 :
 	10-fold result
 		final Rule Counts before pruning :  3.00
 		final Rule Counts after pruning :  3.00
-		final Accuracy before pruning : 93.33
-		final Accuracy after pruning : 93.33
+		final Accuracy before pruning : 94.00
+		final Accuracy after pruning : 94.00
 		final Rule Length after pruning :  2.00
 		final selected features :  2.00
 ####################################
@@ -1086,18 +1086,18 @@ version 5 :
 			(confusionMatrix) : 
 			                Actual
 			            4    0    0    
-			predicted   0    6    1    
-			            0    0    4    
-			Accuracy before pruning : 93.33
+			predicted   0    5    1    
+			            0    1    4    
+			Accuracy before pruning : 86.67
 
 		after pruning
 			rules count after pruning : 3
 			(confusionMatrix) : 
 			                Actual
 			            4    0    0    
-			predicted   0    6    1    
-			            0    0    4    
-			Accuracy after pruning : 93.33
+			predicted   0    5    1    
+			            0    1    4    
+			Accuracy after pruning : 86.67
 			rules Length after pruning :  2.00
 
 		number of selected features : 2
@@ -1132,18 +1132,18 @@ version 5 :
 			(confusionMatrix) : 
 			                Actual
 			            2    0    0    
-			predicted   0    4    0    
-			            0    2    7    
-			Accuracy before pruning : 86.67
+			predicted   0    5    0    
+			            0    1    7    
+			Accuracy before pruning : 93.33
 
 		after pruning
 			rules count after pruning : 3
 			(confusionMatrix) : 
 			                Actual
 			            2    0    0    
-			predicted   0    4    0    
-			            0    2    7    
-			Accuracy after pruning : 86.67
+			predicted   0    5    0    
+			            0    1    7    
+			Accuracy after pruning : 93.33
 			rules Length after pruning :  2.00
 
 		number of selected features : 2
@@ -1419,18 +1419,18 @@ version 6 :
 			(confusionMatrix) : 
 			                Actual
 			            5    0    0    
-			predicted   0    5    0    
-			            0    0    5    
-			Accuracy before pruning : 100.00
+			predicted   0    4    0    
+			            0    1    5    
+			Accuracy before pruning : 93.33
 
 		after pruning
 			rules count after pruning : 3
 			(confusionMatrix) : 
 			                Actual
 			            5    0    0    
-			predicted   0    5    0    
-			            0    0    5    
-			Accuracy after pruning : 100.00
+			predicted   0    4    0    
+			            0    1    5    
+			Accuracy after pruning : 93.33
 			rules Length after pruning :  2.00
 
 		number of selected features : 2
@@ -1439,8 +1439,8 @@ version 6 :
 	10-fold result
 		final Rule Counts before pruning :  3.00
 		final Rule Counts after pruning :  3.00
-		final Accuracy before pruning : 93.33
-		final Accuracy after pruning : 93.33
+		final Accuracy before pruning : 92.67
+		final Accuracy after pruning : 92.67
 		final Rule Length after pruning :  2.00
 		final selected features :  2.00
 ####################################
@@ -1981,18 +1981,18 @@ version 9 :
 			(confusionMatrix) : 
 			                Actual
 			            3    0    0    
-			predicted   0    5    1    
-			            0    1    5    
-			Accuracy before pruning : 86.67
+			predicted   0    6    1    
+			            0    0    5    
+			Accuracy before pruning : 93.33
 
 		after pruning
 			rules count after pruning : 3
 			(confusionMatrix) : 
 			                Actual
 			            3    0    0    
-			predicted   0    5    1    
-			            0    1    5    
-			Accuracy after pruning : 86.67
+			predicted   0    6    1    
+			            0    0    5    
+			Accuracy after pruning : 93.33
 			rules Length after pruning :  2.00
 
 		number of selected features : 2
@@ -2004,18 +2004,18 @@ version 9 :
 			(confusionMatrix) : 
 			                Actual
 			            6    0    0    
-			predicted   0    5    0    
-			            0    0    4    
-			Accuracy before pruning : 100.00
+			predicted   0    5    2    
+			            0    0    2    
+			Accuracy before pruning : 86.67
 
 		after pruning
 			rules count after pruning : 3
 			(confusionMatrix) : 
 			                Actual
 			            6    0    0    
-			predicted   0    5    0    
-			            0    0    4    
-			Accuracy after pruning : 100.00
+			predicted   0    5    2    
+			            0    0    2    
+			Accuracy after pruning : 86.67
 			rules Length after pruning :  2.00
 
 		number of selected features : 2
@@ -2073,18 +2073,18 @@ version 9 :
 			(confusionMatrix) : 
 			                Actual
 			            2    0    0    
-			predicted   0    5    1    
-			            0    0    7    
-			Accuracy before pruning : 93.33
+			predicted   0    4    1    
+			            0    1    7    
+			Accuracy before pruning : 86.67
 
 		after pruning
 			rules count after pruning : 3
 			(confusionMatrix) : 
 			                Actual
 			            2    0    0    
-			predicted   0    5    1    
-			            0    0    7    
-			Accuracy after pruning : 93.33
+			predicted   0    4    1    
+			            0    1    7    
+			Accuracy after pruning : 86.67
 			rules Length after pruning :  2.00
 
 		number of selected features : 2
@@ -2162,8 +2162,8 @@ version 9 :
 	10-fold result
 		final Rule Counts before pruning :  3.00
 		final Rule Counts after pruning :  3.00
-		final Accuracy before pruning : 95.33
-		final Accuracy after pruning : 95.33
+		final Accuracy before pruning : 94.00
+		final Accuracy after pruning : 94.00
 		final Rule Length after pruning :  2.00
 		final selected features :  2.00
 ####################################
@@ -2412,7 +2412,7 @@ version 10 :
 result for 100 runs
 final rule count before pruning in 100 runs :  3.00
 final rule count after pruning in 100 runs :  3.00
-final accuracy before pruning in 100 runs : 93.60
-final accuracy after pruning in 100 runs : 93.60
+final accuracy before pruning in 100 runs : 93.40
+final accuracy after pruning in 100 runs : 93.40
 final rule length after pruning in 100 runs :  2.00
 final selected features in 100 runs :  2.00
